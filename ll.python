@@ -1,0 +1,62 @@
+import tkinter as tk
+from tkinter import messagebox
+import cv2
+import qrcode
+from PIL import Image, ImageTk
+
+class QRCodeReaderApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("QR Code Brochure Reader")
+        self.root.geometry("400x400")
+
+        self.label = tk.Label(root, text="Scan a QR Code", font=("Helvetica", 16))
+        self.label.pack(pady=20)
+
+        self.scan_button = tk.Button(root, text="Scan QR Code", command=self.scan_qr_code)
+        self.scan_button.pack(pady=10)
+
+        self.result_label = tk.Label(root, text="", wraplength=300)
+        self.result_label.pack(pady=20)
+
+    def scan_qr_code(self):
+        # Start the camera
+        cap = cv2.VideoCapture(0)
+
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # Convert the frame to grayscale
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            # Initialize the QR Code detector
+            detector = cv2.QRCodeDetector()
+            data, bbox, _ = detector(gray)
+
+            # If a QR code is detected
+            if bbox is not None:
+                # Draw a rectangle around the QR code
+                cv2.polylines(frame, [bbox.astype(int)], True, (0, 255, 0), 2)
+
+                if data:
+                    # Display the result
+                    self.result_label.config(text=f"QR Code Data: {data}")
+                    messagebox.showinfo("QR Code Detected", f"Data: {data}")
+                    break
+
+            # Show the frame
+            cv2.imshow("QR Code Scanner", frame)
+
+            # Break the loop on 'q' key press
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = QRCodeReaderApp(root)
+    root.mainloop()
